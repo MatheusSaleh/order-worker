@@ -1,0 +1,35 @@
+server:
+  port: ${HTTP_PORT:8082}
+
+spring:
+  application:
+    name: order-worker
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    listener:
+      simple:
+        # Um pedido por vez: deixa a fila visivel no front-end e simula um worker limitado
+        concurrency: 1
+        max-concurrency: 1
+        prefetch: 1
+        # Excecoes nao voltam para a fila: vao para a DLQ (pedidos_fila.dlq)
+        default-requeue-rejected: false
+  mongodb:
+    uri: ${MONGODB_URI:mongodb://localhost:27017/orderdb}
+
+order:
+  queue: ${ORDER_QUEUE:pedidos_fila}
+  worker:
+    processing-delay-ms: ${WORKER_PROCESSING_DELAY_MS:1200}
+    failure-rate: ${WORKER_FAILURE_RATE:0.0}
+    max-attempts: ${WORKER_MAX_ATTEMPTS:3}
+    retry-backoff-ms: ${WORKER_RETRY_BACKOFF_MS:400}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
